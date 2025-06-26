@@ -1,0 +1,35 @@
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
+
+SoftwareSerial gpsSerial(4, 3); // RX, TX
+TinyGPSPlus gps;
+
+const float dangerLat = 12.9716;   // Example: Danger zone latitude
+const float dangerLon = 77.5946;   // Example: Danger zone longitude
+const float radius = 0.001;        // Rough range in degrees (~100 meters)
+
+int buzzerPin = 8;
+
+void setup() {
+  Serial.begin(9600);
+  gpsSerial.begin(9600);
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(buzzerPin, LOW);
+}
+
+void loop() {
+  while (gpsSerial.available()) {
+    gps.encode(gpsSerial.read());
+  }
+
+  if (gps.location.isValid()) {
+    float lat = gps.location.lat();
+    float lon = gps.location.lng();
+
+    Serial.print("Lat: "); Serial.println(lat);
+    Serial.print("Lon: "); Serial.println(lon);
+
+    if (abs(lat - dangerLat) < radius && abs(lon - dangerLon) < radius) {
+      digitalWrite(buzzerPin, HIGH); // Trigger alert
+    } else {
+      digitalWrite(buzzerPin, LOW);
